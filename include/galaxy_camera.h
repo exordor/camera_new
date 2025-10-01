@@ -20,7 +20,8 @@ namespace galaxy_camera {
                      uint32_t height, uint32_t width, uint32_t step,
                      uint32_t offset_x, uint32_t offset_y,
                      const std::string &encoding,
-                     const std::string &camera_ip);
+                     const std::string &camera_ip,
+                     const std::string &camera_pixel_format);
 
         ~GalaxyCamera();
 
@@ -40,6 +41,8 @@ namespace galaxy_camera {
         static char *raw8_buf;
         static image_transport::CameraPublisher pub_;
         static sensor_msgs::CameraInfo info_;
+
+        std::string requested_pixel_format_;
 
         static void GX_STDC onFrameCB(GX_FRAME_CALLBACK_PARAM *pFrame);
 

@@ -18,6 +18,7 @@ namespace galaxy_camera {
         nh_.param("image_offset_x", image_offset_x_, 0);
         nh_.param("image_offset_y", image_offset_y_, 0);
         nh_.param("pixel_format", pixel_format_, std::string("bgr8"));
+        nh_.param("camera_pixel_format", camera_pixel_format_, std::string("BayerRG8"));
         nh_.param("camera_ip", camera_ip_, std::string("169.254.222.114"));
         
         info_.reset(new camera_info_manager::CameraInfoManager(nh_, camera_name_, camera_info_url_));
@@ -36,7 +37,7 @@ namespace galaxy_camera {
                 nh_, image_pub_, info_->getCameraInfo(),
                 image_height_, image_width_, image_width_ * 3,
                 image_offset_x_, image_offset_y_, pixel_format_,
-                camera_ip_);
+                camera_ip_, camera_pixel_format_);
     }
 
     GalaxyCameraNode::~GalaxyCameraNode() {

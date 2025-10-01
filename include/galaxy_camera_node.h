@@ -20,7 +20,7 @@ namespace galaxy_camera {
         boost::shared_ptr<camera_info_manager::CameraInfoManager> info_;
     private:
         GalaxyCamera *galaxy_camera_;
-        std::string camera_name_, camera_info_url_, pixel_format_;
+        std::string camera_name_, camera_info_url_, pixel_format_, camera_pixel_format_;
         std::string camera_ip_;
         int image_width_{}, image_height_{}, image_offset_x_{}, image_offset_y_{};
 
