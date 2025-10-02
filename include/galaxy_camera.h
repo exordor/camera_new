@@ -8,6 +8,7 @@
 #include "libgxiapi/GxIAPI.h"
 #include "libgxiapi/DxImageProc.h"
 #include <image_transport/image_transport.h>
+#include <cstdint>
 #include <string>
 
 

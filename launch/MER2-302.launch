@@ -1,5 +1,6 @@
 <launch>
-    <node name="galaxy_camera" pkg="galaxy_camera" type="galaxy_camera" output="screen">
+    <!-- Ensure stdout/stderr is captured as galaxy_camera-*.log -->
+    <node name="galaxy_camera" pkg="galaxy_camera" type="galaxy_camera" output="log">
         <param name="image_width" value="4096"/>
         <param name="image_height" value="3000"/>
         <!-- <param name="image_width" value="1920"/>
