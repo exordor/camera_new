@@ -112,6 +112,18 @@ namespace galaxy_camera {
         int64_t socket_buffer_kb = socket_buffer_param > 0 ?
                 static_cast<int64_t>(socket_buffer_param) : 8192;
 
+        int packet_size_param = -1;
+        nh_.param("gev_packet_size", packet_size_param, -1);
+        int64_t packet_size = packet_size_param > 0 ?
+                static_cast<int64_t>(packet_size_param) : 1500;
+        if (packet_size < 576) {
+            packet_size = 576;  // Minimum safe UDP packet size
+            ROS_WARN("Packet size too small, set to minimum 576 bytes");
+        } else if (packet_size > 9000) {
+            packet_size = 9000;  // Maximum for jumbo frames
+            ROS_WARN("Packet size too large, capped at 9000 bytes");
+        }
+
         ROS_INFO("Target frame rate: %.2f fps (period %.2f ms)",
                  configured_frame_rate, frame_period_ms);
         assert(GXInitLib() == GX_STATUS_SUCCESS); // Initializes the library.
@@ -304,10 +316,44 @@ namespace galaxy_camera {
             ROS_INFO("✓ Stream transfer size set to 256KB");
         }
         
-        // Set max packet size (may help with fragmentation)
-        gx_status = GXSetInt(dev_handle_, GX_INT_GEV_PACKETSIZE, 1500);
+        // Set max packet size (configurable via ROS parameter)
+        // Query the supported packet size range from the camera
+        GX_INT_RANGE packet_size_range;
+        if (GXGetIntRange(dev_handle_, GX_INT_GEV_PACKETSIZE, &packet_size_range) == GX_STATUS_SUCCESS) {
+            ROS_INFO("Camera packet size range: %lld - %lld bytes",
+                     static_cast<long long>(packet_size_range.nMin),
+                     static_cast<long long>(packet_size_range.nMax));
+            
+            // Clamp to camera's supported range
+            if (packet_size < packet_size_range.nMin) {
+                packet_size = packet_size_range.nMin;
+                ROS_WARN("Requested packet size below camera minimum, adjusted to %lld bytes",
+                         static_cast<long long>(packet_size));
+            } else if (packet_size > packet_size_range.nMax) {
+                packet_size = packet_size_range.nMax;
+                ROS_WARN("Requested packet size above camera maximum, adjusted to %lld bytes",
+                         static_cast<long long>(packet_size));
+            }
+        } else {
+            ROS_WARN("Could not query packet size range from camera");
+        }
+        
+        gx_status = GXSetInt(dev_handle_, GX_INT_GEV_PACKETSIZE, packet_size);
         if (gx_status == GX_STATUS_SUCCESS) {
-            ROS_INFO("✓ Packet size set to 1500 bytes");
+            ROS_INFO("✓ Packet size set to %lld bytes", static_cast<long long>(packet_size));
+            
+            // Verify the actual packet size set
+            int64_t actual_packet_size = 0;
+            if (GXGetInt(dev_handle_, GX_INT_GEV_PACKETSIZE, &actual_packet_size) == GX_STATUS_SUCCESS) {
+                if (actual_packet_size != packet_size) {
+                    ROS_WARN("Camera adjusted packet size to %lld bytes (requested %lld)",
+                             static_cast<long long>(actual_packet_size),
+                             static_cast<long long>(packet_size));
+                }
+            }
+        } else {
+            ROS_ERROR("Failed to set packet size to %lld bytes (status=%d)",
+                      static_cast<long long>(packet_size), gx_status);
         }
         
         ROS_INFO("GigE Vision stream configuration complete.");
