@@ -111,7 +111,71 @@ typedef struct GX_FRAME_DATA {
 - `nPixelFormat`: 像素格式（Mono8, Bayer, RGB等）
 - `nImgSize`: 图像数据总大小
 - `nFrameID`: 帧序号，用于检测丢帧
-- `nTimestamp`: 相机时间戳
+- `nTimestamp`: 相机硬件时间戳（详见下方说明）
+
+#### nTimestamp 详解
+
+**时间戳来源**: 相机内部硬件计数器
+
+**生成位置**: 
+- 由相机FPGA/芯片内部的时钟计数器产生
+- 在图像传感器**曝光结束时刻**记录
+- 独立于PC系统时钟运行
+
+**时间戳单位**: 
+- 取决于相机型号的时钟频率（`GX_INT_TIMESTAMP_TICK_FREQUENCY`）
+- 常见值: 1 GHz (1 tick = 1 纳秒) 或 125 MHz (1 tick = 8 纳秒)
+- 需要查询 `GX_INT_TIMESTAMP_TICK_FREQUENCY` 获取准确频率
+
+**时间戳起点**:
+- 从相机上电/复位时开始计数（tick = 0）
+- **不是** Unix时间戳（不基于1970-01-01）
+- 可通过 `GX_COMMAND_TIMESTAMP_RESET` 命令重置为0
+
+**典型值示例**:
+```
+假设时钟频率 = 125 MHz (8ns/tick)
+nTimestamp = 625,000,000  // 625M ticks
+实际时间 = 625,000,000 × 8ns = 5,000,000,000ns = 5秒
+含义: 相机启动后第5秒拍摄的图像
+```
+
+**与ROS时间戳的区别**:
+
+| 特性 | nTimestamp (硬件) | ROS header.stamp (软件) |
+|------|------------------|------------------------|
+| 生成位置 | 相机FPGA | PC系统 |
+| 时间基准 | 相机上电时刻 | Unix Epoch (1970) |
+| 精度 | 纳秒级 (取决于时钟) | 纳秒级 |
+| 延迟 | 0ms (曝光结束) | ~50-150ms (包含传输和处理) |
+| 用途 | 精确帧时序、触发同步 | ROS节点间同步 |
+
+**如何使用硬件时间戳**:
+```cpp
+// 获取时钟频率
+int64_t tick_frequency;
+GXGetInt(hDevice, GX_INT_TIMESTAMP_TICK_FREQUENCY, &tick_frequency);
+
+// 转换为秒
+double timestamp_seconds = (double)pFrame->nTimestamp / tick_frequency;
+
+// 转换为ROS时间（需要记录起始时间）
+static ros::Time start_ros_time = ros::Time::now();
+static uint64_t start_camera_timestamp = first_frame->nTimestamp;
+
+ros::Time frame_time = start_ros_time + 
+    ros::Duration((pFrame->nTimestamp - start_camera_timestamp) / (double)tick_frequency);
+```
+
+**优点**:
+- ✅ 精确反映图像实际捕获时刻
+- ✅ 不受PC系统负载影响
+- ✅ 适合多相机同步、外部触发场景
+
+**缺点**:
+- ❌ 需要转换才能与ROS系统时间对应
+- ❌ 相机重启会重置计数器
+- ❌ 不同相机的时间戳不同步（除非使用硬件同步）
 
 ### 3.2 图像缓冲区 (GX_FRAME_BUFFER)
 
