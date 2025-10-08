@@ -37,14 +37,14 @@
         
         <!-- Inter-packet delay in microseconds (0-50000, default 5000) -->
         <!-- Higher values reduce network congestion but slow down transmission -->
-        <param name="gev_packet_delay_us" value="5000"/>
+        <param name="gev_packet_delay_us" value="8000"/>
         
         <!-- Timeout values in milliseconds -->
-        <param name="gev_resend_timeout_ms" value="500"/>
-        <param name="gev_packet_timeout_ms" value="100"/>
-        <param name="gev_block_timeout_ms" value="500"/>
+        <param name="gev_resend_timeout_ms" value="100"/>
+        <param name="gev_packet_timeout_ms" value="200"/>
+        <param name="gev_block_timeout_ms" value="5000"/>
         
-        <!-- Socket buffer size in KB (default 8192) -->
-        <param name="gev_socket_buffer_kb" value="8192"/>
+        <!-- Socket buffer size in KB (16384 = 16 MB for 4K camera) -->
+        <param name="gev_socket_buffer_kb" value="16384"/>
     </node>
 </launch>
