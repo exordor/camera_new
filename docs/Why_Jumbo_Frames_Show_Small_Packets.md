@@ -12,10 +12,36 @@ GigE Vision相机使用两个不同的UDP端口：
 
 | 协议 | 端口 | 用途 | 数据包大小 |
 |------|------|------|-----------|
-| GVCP | 11220 | 控制协议 | 16-44字节 |
-| GVSP | 3956 | 流协议（图像数据） | 可配置 (1500-9000字节) |
+| GVSP | 11220 | 流协议（图像数据） | LEADER 44字节, IMAGE 1436字节, TRAILER 16字节 (UDP载荷) |
+| GVCP | 3956 | 控制协议 | 12字节（心跳/控制） |
 
-你在tcpdump中看到的小数据包是 **GVCP控制包**，而不是图像数据包。
+**通过Wireshark分析发现的实际包结构**：
+
+#### Port 11220 (GVSP) 的三种包类型：
+
+1. **LEADER包 (44字节 UDP载荷)**: 帧起始标记
+   - 包含帧元数据（宽度、高度、像素格式、时间戳）
+   - Block ID: 帧编号
+   - Packet ID: 0（总是第一个包）
+   - 线上大小: 86字节（含以太网+IP+UDP头）
+
+2. **IMAGE包 (1436字节 UDP载荷)**: 实际图像数据
+   - 包含像素数据
+   - 每帧约8,419个包
+   - Packet ID: 1, 2, 3, ..., 8419
+   - 线上大小: 1514字节（含以太网+IP+UDP头）
+
+3. **TRAILER包 (16字节 UDP载荷)**: 帧结束标记
+   - 包含帧校验信息
+   - Block ID: 与LEADER相同
+   - Packet ID: 最后一个（如8420）
+   - 线上大小: 58字节（含以太网+IP+UDP头）
+
+#### Port 3956 (GVCP) 仅用于控制：
+- 12字节心跳/状态包
+- 设备发现和参数配置
+
+你在tcpdump中看到的小数据包（44字节或16字节 UDP载荷）是 **GVSP的LEADER或TRAILER包**，而不是控制包。
 
 ### 2. SDK使用回调模式
 
@@ -205,9 +231,25 @@ netstat -s | grep -i fragment
 
 ### 为什么tcpdump看到的是小包？
 
-1. **GVCP控制包**（端口11220）: 本来就是16-44字节
-2. **GVSP流包**（端口3956）: SDK使用零拷贝/DMA，tcpdump捕获不到实际数据
-3. **可见的12字节GVSP包**: 只是协议开销（心跳、状态），不是图像数据
+1. **GVSP LEADER包**（端口11220）: 每帧起始的44字节元数据包（UDP载荷）
+2. **GVSP TRAILER包**（端口11220）: 每帧结束的16字节校验包（UDP载荷）
+3. **GVSP IMAGE包**（端口11220）: SDK使用零拷贝/DMA，tcpdump可以捕获到1436字节载荷
+4. **GVCP心跳包**（端口3956）: 12字节的控制/心跳包
+
+### 完整的一帧数据包序列
+
+```
+Frame 167 (Block ID: 167):
+  Packet 0:    LEADER (44 bytes UDP, 86 bytes on wire)    ← 帧起始
+  Packet 1:    IMAGE (1436 bytes UDP, 1514 bytes on wire) ← 像素数据
+  Packet 2:    IMAGE (1436 bytes UDP, 1514 bytes on wire)
+  Packet 3:    IMAGE (1436 bytes UDP, 1514 bytes on wire)
+  ...
+  Packet 8419: IMAGE (1436 bytes UDP, 1514 bytes on wire)
+  Packet 8420: TRAILER (16 bytes UDP, 58 bytes on wire)   ← 帧结束
+```
+
+总计：1个LEADER + 8,419个IMAGE + 1个TRAILER = 8,421个包/帧
 
 ### 实际情况判断
 
