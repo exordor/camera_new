@@ -2,124 +2,136 @@
 /** 
 \file      DxImageProc.h
 \brief     Image Processing Library
-\version   v1.0.1904.9101 
-\date      2019-04-10
+\version   v1.1.2303.9161 
+\date      2023-03-16
 \author    Software Department 
 <p>Copyright (c) 2012-2019 and all right reserved.</p> 
-*/
+*/ 
 //--------------------------------------------------------------- 
 
-#if !defined (_DXIMAGEPROC_H)
-#define _DXIMAGEPROC_H            ///< pre-compiled macro define
+#if !defined (_DXIMAGEPROC_H)         
+#define _DXIMAGEPROC_H 			///< pre-compiled macro define
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef _WIN32
+#ifdef _WIN32                   
 #include "stdafx.h"
 #define DHDECL __stdcall
 
-#else
+#else                          
 #include <stdlib.h>
 #include <string.h>
-#define  DHDECL
+#define  DHDECL __attribute__((visibility("default")))
 #endif
 
-typedef char VxInt8;
-typedef short VxInt16;
-typedef int VxInt32;
-#ifdef _WIN32
-typedef __int64         VxInt64;
+typedef char            VxInt8;     
+typedef short           VxInt16;     
+typedef int             VxInt32;     
+#ifdef _WIN32 
+typedef __int64         VxInt64;     
 #else
-typedef long long VxInt64;
+typedef long long       VxInt64;     
 #endif
-typedef unsigned char VxUint8;
-typedef unsigned short VxUint16;
-typedef unsigned int VxUint32;
+typedef unsigned char   VxUint8;     
+typedef unsigned short  VxUint16;    
+typedef unsigned int    VxUint32;    
 
 /// status  definition
-typedef enum tagDX_STATUS {
-  DX_OK = 0,
-  DX_PARAMETER_INVALID = -101,
-  DX_PARAMETER_OUT_OF_BOUND = -102,
-  DX_NOT_ENOUGH_SYSTEM_MEMORY = -103,
-  DX_NOT_FIND_DEVICE = -104,
-  DX_STATUS_NOT_SUPPORTED = -105,
-  DX_CPU_NOT_SUPPORT_ACCELERATE = -106
+typedef enum  tagDX_STATUS
+{
+	DX_OK                         = 0,    
+	DX_PARAMETER_INVALID          = -101, 
+	DX_PARAMETER_OUT_OF_BOUND     = -102, 
+	DX_NOT_ENOUGH_SYSTEM_MEMORY   = -103, 
+	DX_NOT_FIND_DEVICE            = -104, 
+	DX_STATUS_NOT_SUPPORTED       = -105,
+	DX_CPU_NOT_SUPPORT_ACCELERATE = -106,  
+    DX_PARAMETER_NOT_INITIALIZED  = -107,
+	DX_FILE_OPEN_FAIL             = -108,
+	DX_FILE_READ_FAIL             = -109
 } DX_STATUS;
 
 /// Bayer layout
-typedef enum tagDX_PIXEL_COLOR_FILTER {
-  NONE = 0,
-  BAYERRG = 1,
-  BAYERGB = 2,
-  BAYERGR = 3,
-  BAYERBG = 4
+typedef enum  tagDX_PIXEL_COLOR_FILTER
+{
+	NONE    = 0,   
+	BAYERRG = 1,   
+	BAYERGB = 2,   
+	BAYERGR = 3,   
+	BAYERBG = 4    
 } DX_PIXEL_COLOR_FILTER;
 
 /// image interpolation method
-typedef enum tagDX_BAYER_CONVERT_TYPE {
-  RAW2RGB_NEIGHBOUR = 0,
-  RAW2RGB_ADAPTIVE = 1,
-  RAW2RGB_NEIGHBOUR3 = 2
+typedef enum tagDX_BAYER_CONVERT_TYPE
+{
+	RAW2RGB_NEIGHBOUR  = 0,   
+	RAW2RGB_ADAPTIVE   = 1,   
+	RAW2RGB_NEIGHBOUR3 = 2    
 } DX_BAYER_CONVERT_TYPE;
 
 /// image valid bit
-typedef enum tagDX_VALID_BIT {
-  DX_BIT_0_7 = 0,    ///< bit 0~7
-  DX_BIT_1_8 = 1,    ///< bit 1~8
-  DX_BIT_2_9 = 2,    ///< bit 2~9
-  DX_BIT_3_10 = 3,    ///< bit 3~10
-  DX_BIT_4_11 = 4     ///< bit 4~11
+typedef enum tagDX_VALID_BIT
+{ 
+	DX_BIT_0_7	    = 0,    ///< bit 0~7
+	DX_BIT_1_8	    = 1,    ///< bit 1~8
+	DX_BIT_2_9	    = 2,    ///< bit 2~9
+	DX_BIT_3_10	    = 3,    ///< bit 3~10
+	DX_BIT_4_11	    = 4     ///< bit 4~11
 } DX_VALID_BIT;
 
 /// image actual bits
-typedef enum tagDX_ACTUAL_BITS {
-  DX_ACTUAL_BITS_10 = 10,    ///< 10bit
-  DX_ACTUAL_BITS_12 = 12,    ///< 12bit
-  DX_ACTUAL_BITS_14 = 14,    ///< 14bit
-  DX_ACTUAL_BITS_16 = 16     ///< 16bit
+typedef enum tagDX_ACTUAL_BITS
+{
+	DX_ACTUAL_BITS_10 = 10,    ///< 10bit
+	DX_ACTUAL_BITS_12 = 12,    ///< 12bit
+	DX_ACTUAL_BITS_14 = 14,    ///< 14bit
+	DX_ACTUAL_BITS_16 = 16     ///< 16bit
 } DX_ACTUAL_BITS;
 
 ///  image mirror method
-typedef enum DX_IMAGE_MIRROR_MODE {
-  HORIZONTAL_MIRROR = 0,
-  VERTICAL_MIRROR = 1
-} DX_IMAGE_MIRROR_MODE;
+typedef enum DX_IMAGE_MIRROR_MODE
+{
+	HORIZONTAL_MIRROR = 0,     
+	VERTICAL_MIRROR   = 1     
+}DX_IMAGE_MIRROR_MODE;
 
 /// RGB channel order
-typedef enum DX_RGB_CHANNEL_ORDER {
-  DX_ORDER_RGB = 0,
-  DX_ORDER_BGR = 1
-} DX_RGB_CHANNEL_ORDER;
+typedef enum DX_RGB_CHANNEL_ORDER
+{
+	DX_ORDER_RGB = 0,
+	DX_ORDER_BGR = 1
+}DX_RGB_CHANNEL_ORDER;
 
 /// mono8 image process struct 
-typedef struct MONO_IMG_PROCESS {
-  bool bDefectivePixelCorrect;
-  bool bSharpness;
-  bool bAccelerate;
-  float fSharpFactor;
-  VxUint8 *pProLut;
-  VxUint16 nLutLength;
-  VxUint8 arrReserved[32];
+typedef  struct  MONO_IMG_PROCESS
+{
+	bool            bDefectivePixelCorrect;   
+	bool            bSharpness;               
+	bool            bAccelerate;               
+	float           fSharpFactor;              
+	VxUint8         *pProLut;                  
+	VxUint16        nLutLength;                
+	VxUint8         arrReserved[32];           
 } MONO_IMG_PROCESS;
 
 /// Raw8 Image process struct 
-typedef struct COLOR_IMG_PROCESS {
-  bool bDefectivePixelCorrect;
-  bool bDenoise;
-  bool bSharpness;
-  bool bAccelerate;
-  VxInt16 *parrCC;
-  VxUint8 nCCBufLength;
-  float fSharpFactor;
-  VxUint8 *pProLut;
-  VxUint16 nLutLength;
-  DX_BAYER_CONVERT_TYPE cvType;
-  DX_PIXEL_COLOR_FILTER emLayOut;
-  bool bFlip;
-  VxUint8 arrReserved[32];
+typedef  struct  COLOR_IMG_PROCESS
+{
+	bool                   bDefectivePixelCorrect; 
+	bool                   bDenoise;              
+	bool                   bSharpness;             
+	bool                   bAccelerate;            
+	VxInt16                *parrCC;               
+	VxUint8                nCCBufLength;           
+	float                  fSharpFactor;          
+	VxUint8                *pProLut;              
+	VxUint16               nLutLength;            
+    DX_BAYER_CONVERT_TYPE  cvType;                 
+	DX_PIXEL_COLOR_FILTER  emLayOut;               
+	bool                   bFlip;                  
+	VxUint8                arrReserved[32];        
 } COLOR_IMG_PROCESS;
 
 //--------------------------------------------------
@@ -136,13 +148,7 @@ typedef struct COLOR_IMG_PROCESS {
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw8toRGB24(void *pInputBuffer,
-                             void *pOutputBuffer,
-                             VxUint32 nWidth,
-                             VxUint32 nHeight,
-                             DX_BAYER_CONVERT_TYPE cvtype,
-                             DX_PIXEL_COLOR_FILTER nBayerType,
-                             bool bFlip);
+VxInt32 DHDECL DxRaw8toRGB24(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip);
 
 //--------------------------------------------------
 /**
@@ -159,14 +165,7 @@ VxInt32 DHDECL DxRaw8toRGB24(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw8toRGB24Ex(void *pInputBuffer,
-                               void *pOutputBuffer,
-                               VxUint32 nWidth,
-                               VxUint32 nHeight,
-                               DX_BAYER_CONVERT_TYPE cvtype,
-                               DX_PIXEL_COLOR_FILTER nBayerType,
-                               bool bFlip,
-                               DX_RGB_CHANNEL_ORDER emChannelOrder);
+VxInt32 DHDECL DxRaw8toRGB24Ex(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip, DX_RGB_CHANNEL_ORDER emChannelOrder);
 
 //--------------------------------------------------
 /**
@@ -179,7 +178,7 @@ VxInt32 DHDECL DxRaw8toRGB24Ex(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw12PackedToRaw16(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
+VxInt32 DHDECL DxRaw12PackedToRaw16(void* pInputBuffer, void* pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
 
 //-------------------------------------------------
 /**
@@ -192,7 +191,7 @@ VxInt32 DHDECL DxRaw12PackedToRaw16(void *pInputBuffer, void *pOutputBuffer, VxU
 \return emStatus
 */
 //-------------------------------------------------
-VxInt32 DHDECL DxRaw10PackedToRaw16(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
+VxInt32 DHDECL DxRaw10PackedToRaw16(void* pInputBuffer, void* pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
 
 //------------------------------------------------
 /**
@@ -205,7 +204,7 @@ VxInt32 DHDECL DxRaw10PackedToRaw16(void *pInputBuffer, void *pOutputBuffer, VxU
 \return emStatus
 */
 //------------------------------------------------
-VxInt32 DHDECL DxRotate90CW8B(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
+VxInt32 DHDECL DxRotate90CW8B(void* pInputBuffer, void* pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
 
 //------------------------------------------------
 /**
@@ -218,7 +217,7 @@ VxInt32 DHDECL DxRotate90CW8B(void *pInputBuffer, void *pOutputBuffer, VxUint32 
 \return emStatus
 */
 //------------------------------------------------
-VxInt32 DHDECL DxRotate90CCW8B(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
+VxInt32 DHDECL DxRotate90CCW8B(void* pInputBuffer, void* pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
 
 //-----------------------------------------------
 /**
@@ -231,7 +230,7 @@ VxInt32 DHDECL DxRotate90CCW8B(void *pInputBuffer, void *pOutputBuffer, VxUint32
 \return emStatus
 */
 //-----------------------------------------------
-VxInt32 DHDECL DxBrightness(void *pInputBuffer, void *pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
+VxInt32 DHDECL DxBrightness(void* pInputBuffer, void* pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
 
 //--------------------------------------------------
 /**
@@ -244,7 +243,7 @@ VxInt32 DHDECL DxBrightness(void *pInputBuffer, void *pOutputBuffer, VxUint32 nI
 \return emStatus
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxContrast(void *pInputBuffer, void *pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
+VxInt32 DHDECL DxContrast(void* pInputBuffer, void* pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
 
 //--------------------------------------------------
 /**
@@ -258,7 +257,7 @@ VxInt32 DHDECL DxContrast(void *pInputBuffer, void *pOutputBuffer, VxUint32 nIma
 \return emStatus
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxSharpen24B(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, float fFactor);
+VxInt32 DHDECL DxSharpen24B(void* pInputBuffer, void* pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, float fFactor);
 
 //--------------------------------------------------
 /**
@@ -271,7 +270,7 @@ VxInt32 DHDECL DxSharpen24B(void *pInputBuffer, void *pOutputBuffer, VxUint32 nW
 \return emStatus   
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxSaturation(void *pInputBuffer, void *pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
+VxInt32 DHDECL DxSaturation(void* pInputBuffer, void* pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
 
 //--------------------------------------------------
 /**
@@ -285,14 +284,9 @@ VxInt32 DHDECL DxSaturation(void *pInputBuffer, void *pOutputBuffer, VxUint32 nI
 \param  dRatioB         [out]B ratio
 
 \return emStatus  
-*/
+*/   
 //--------------------------------------------------
-VxInt32 DHDECL DxGetWhiteBalanceRatio(void *pInputBuffer,
-                                      VxUint32 nWidth,
-                                      VxUint32 nHeight,
-                                      double *dRatioR,
-                                      double *dRatioG,
-                                      double *dRatioB);
+VxInt32 DHDECL DxGetWhiteBalanceRatio(void *pInputBuffer, VxUint32 nWidth, VxUint32 nHeight, double* dRatioR, double* dRatioG, double* dRatioB);
 
 //-----------------------------------------------------
 /**
@@ -307,7 +301,7 @@ VxInt32 DHDECL DxGetWhiteBalanceRatio(void *pInputBuffer,
 \return emStatus  
 */
 //-----------------------------------------------------
-VxInt32 DHDECL DxAutoRawDefectivePixelCorrect(void *pRawImgBuf, VxUint32 nWidth, VxUint32 nHeight, VxInt32 nBitNum);
+VxInt32 DHDECL DxAutoRawDefectivePixelCorrect(void* pRawImgBuf, VxUint32 nWidth, VxUint32 nHeight, VxInt32 nBitNum);
 
 //--------------------------------------------------
 /**
@@ -321,11 +315,7 @@ VxInt32 DHDECL DxAutoRawDefectivePixelCorrect(void *pRawImgBuf, VxUint32 nWidth,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw16toRaw8(void *pInputBuffer,
-                             void *pOutputBuffer,
-                             VxUint32 nWidth,
-                             VxUint32 nHeight,
-                             DX_VALID_BIT nValidBits);
+VxInt32 DHDECL DxRaw16toRaw8(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_VALID_BIT nValidBits);
 
 //--------------------------------------------------
 /**
@@ -339,11 +329,7 @@ VxInt32 DHDECL DxRaw16toRaw8(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRGB48toRGB24(void *pInputBuffer,
-                              void *pOutputBuffer,
-                              VxUint32 nWidth,
-                              VxUint32 nHeight,
-                              DX_VALID_BIT nValidBits);
+VxInt32 DHDECL DxRGB48toRGB24(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_VALID_BIT nValidBits);
 
 //--------------------------------------------------
 /**
@@ -360,14 +346,7 @@ VxInt32 DHDECL DxRGB48toRGB24(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw16toRGB48(void *pInputBuffer,
-                              void *pOutputBuffer,
-                              VxUint32 nWidth,
-                              VxUint32 nHeight,
-                              DX_ACTUAL_BITS nActualBits,
-                              DX_BAYER_CONVERT_TYPE cvtype,
-                              DX_PIXEL_COLOR_FILTER nBayerType,
-                              bool bFlip);
+VxInt32 DHDECL DxRaw16toRGB48(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_ACTUAL_BITS nActualBits, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip);
 
 //--------------------------------------------------
 /**
@@ -386,15 +365,7 @@ VxInt32 DHDECL DxRaw16toRGB48(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw8toARGB32(void *pInputBuffer,
-                              void *pOutputBuffer,
-                              VxUint32 nWidth,
-                              VxUint32 nHeight,
-                              int nStride,
-                              DX_BAYER_CONVERT_TYPE cvtype,
-                              DX_PIXEL_COLOR_FILTER nBayerType,
-                              bool bFlip,
-                              VxUint8 nAlpha);
+VxInt32 DHDECL DxRaw8toARGB32(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, int nStride, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip, VxUint8 nAlpha);
 
 //--------------------------------------------------
 /**
@@ -434,13 +405,7 @@ VxInt32 DHDECL DxGetGammatLut(double dGammaParam, void *pGammaLut, int *pLutLeng
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxImageImprovment(void *pInputBuffer,
-                                 void *pOutputBuffer,
-                                 VxUint32 nWidth,
-                                 VxUint32 nHeight,
-                                 VxInt64 nColorCorrectionParam,
-                                 void *pContrastLut,
-                                 void *pGammaLut);
+VxInt32 DHDECL DxImageImprovment(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, VxInt64 nColorCorrectionParam, void *pContrastLut, void *pGammaLut);
 
 //--------------------------------------------------
 /**
@@ -456,13 +421,7 @@ VxInt32 DHDECL DxImageImprovment(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxARGBImageImprovment(void *pInputBuffer,
-                                     void *pOutputBuffer,
-                                     VxUint32 nWidth,
-                                     VxUint32 nHeight,
-                                     VxInt64 nColorCorrectionParam,
-                                     void *pContrastLut,
-                                     void *pGammaLut);
+VxInt32 DHDECL DxARGBImageImprovment(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, VxInt64 nColorCorrectionParam, void *pContrastLut, void *pGammaLut);
 
 //--------------------------------------------------
 /**
@@ -479,14 +438,7 @@ VxInt32 DHDECL DxARGBImageImprovment(void *pInputBuffer,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxImageImprovmentEx(void *pInputBuffer,
-                                   void *pOutputBuffer,
-                                   VxUint32 nWidth,
-                                   VxUint32 nHeight,
-                                   VxInt64 nColorCorrectionParam,
-                                   void *pContrastLut,
-                                   void *pGammaLut,
-                                   DX_RGB_CHANNEL_ORDER emChannelOrder);
+VxInt32 DHDECL DxImageImprovmentEx(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, VxInt64 nColorCorrectionParam, void *pContrastLut, void *pGammaLut, DX_RGB_CHANNEL_ORDER emChannelOrder);
 
 //-------------------------------------------------------------
 /**
@@ -500,11 +452,7 @@ VxInt32 DHDECL DxImageImprovmentEx(void *pInputBuffer,
 \return emStatus
 */
 //-------------------------------------------------------------
-VxInt32 DHDECL DxImageMirror(void *pInputBuffer,
-                             void *pOutputBuffer,
-                             VxUint32 nWidth,
-                             VxUint32 nHeight,
-                             DX_IMAGE_MIRROR_MODE emMirrorMode);
+VxInt32 DHDECL DxImageMirror(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_IMAGE_MIRROR_MODE emMirrorMode);
 
 //--------------------------------------------------
 /**
@@ -545,11 +493,7 @@ VxInt32 DHDECL DxCalcCCParam(VxInt64 nColorCorrectionParam, VxInt16 nSaturation,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxRaw8ImgProcess(void *pRaw8Buf,
-                                void *pRgb24Buf,
-                                VxUint32 nWidth,
-                                VxUint32 nHeight,
-                                COLOR_IMG_PROCESS *pstClrImgProc);
+VxInt32 DHDECL DxRaw8ImgProcess(void *pRaw8Buf, void *pRgb24Buf, VxUint32 nWidth, VxUint32 nHeight, COLOR_IMG_PROCESS *pstClrImgProc);
 
 //--------------------------------------------------
 /**
@@ -563,11 +507,34 @@ VxInt32 DHDECL DxRaw8ImgProcess(void *pRaw8Buf,
 \return emStatus  
 */
 //--------------------------------------------------
-VxInt32 DHDECL DxMono8ImgProcess(void *pInputBuf,
-                                 void *pOutputBuf,
-                                 VxUint32 nWidth,
-                                 VxUint32 nHeight,
-                                 MONO_IMG_PROCESS *pstGrayImgProc);
+VxInt32 DHDECL DxMono8ImgProcess(void *pInputBuf, void *pOutputBuf, VxUint32 nWidth, VxUint32  nHeight, MONO_IMG_PROCESS *pstGrayImgProc);
+
+
+
+//--------------------------------------------------
+/**
+\brief  read lut file
+\param  pchLutFilePath  [in]     Lut file path. Lut file(xxx.lut) can be obtained from Lut 
+                                 Create Tool Plugin,which can be get by select Plugin->Lut 
+                                 Create Tool Plugin from the menu bar in GalaxyView.
+\param  pLut            [in&out] Lookup table. Users need to apply for memory in advance.The 
+                                 memory size is also lookup table length(nLutLength),should be 
+                                 obtained through the interface GXGetBufferLength,
+                                 e.g. GXGetBufferLength(m_hDevice, GX_BUFFER_LUT_VALUEALL,&nLutLength),                               
+\param  pnLutLength     [in]     Lookup table length(unit:byte),which should be obtained through
+                                 the interface GXGetBufferLength, e.g. 
+                                 GXGetBufferLength(m_hDevice, GX_BUFFER_LUT_VALUEALL,&nLutLength), 
+
+\return   DX_OK                       success
+          DX_PARAMETER_INVALID        the input parameter is invalid
+          DX_PARAMETER_OUT_OF_BOUND   the input parameter is out of bound
+          DX_FILE_OPEN_FAIL           file open failed
+          DX_FILE_READ_FAIL           file read failed
+          DX_NOT_ENOUGH_SYSTEM_MEMORY system memory is not enough
+          DX_STATUS_NOT_SUPPORTED     lookup table length is not supported
+*/
+//--------------------------------------------------
+VxInt32 DHDECL DxReadLutFile(const char *pchLutFilePath, void *pLut, VxUint32 *pnLutLength);
 
 #ifdef __cplusplus
 }
